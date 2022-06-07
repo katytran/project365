@@ -1,5 +1,6 @@
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.SQLException;
@@ -14,88 +15,57 @@ import javax.naming.spi.DirStateFactory.Result;
 import java.util.LinkedHashMap;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
+import java.sql.Date;
+import java.text.*;
 
-/*
-Introductory JDBC examples based loosely on the BAKERY dataset from CSC 365 labs.
-
--- MySQL setup:
-drop table if exists hp_goods, hp_customers, hp_items, hp_receipts;
-create table hp_goods as select * from BAKERY.goods;
-create table hp_customers as select * from BAKERY.customers;
-create table hp_items as select * from BAKERY.items;
-create table hp_receipts as select * from BAKERY.receipts;
-
-grant all on amigler.hp_goods to hasty@'%';
-grant all on amigler.hp_customers to hasty@'%';
-grant all on amigler.hp_items to hasty@'%';
-grant all on amigler.hp_receipts to hasty@'%';
-
--- Shell init:
-export CLASSPATH=$CLASSPATH:mysql-connector-java-8.0.16.jar:.
-export HP_JDBC_URL=jdbc:mysql://db.labthreesixfive.com/winter2020?autoReconnect=true\&useSSL=false
-export HP_JDBC_USER=jmustang
-export HP_JDBC_PW=...
- */
 public class InnReservations {
+    static Scanner sc = new Scanner(System.in);
 
-    Scanner sc = new Scanner(System.in);
     public static void main(String[] args) {
-	try {
-	    InnReservations hp = new InnReservations();
-        hp.demoNum();            
-            
-            
-	} catch (SQLException e) {
-	    System.err.println("SQLException: " + e.getMessage());
-	} catch (Exception e2) {
-            System.err.println("Exception: " + e2.getMessage());
-        }
-    }
+        // TODO Auto-generated method stub
+        try {
+            InnReservations rs = new InnReservations();
 
-    private void demoNum() throws SQLException {
-        boolean end = false;
-        int option = -1;
+            while (true) {
+                rs.printMenu();
+                int choice = sc.nextInt();
 
-        while (!end) {
-            printMenu();
-            if (sc.hasNextInt()) {
-                option = sc.nextInt();
-            } else {
-                sc.next();
-                printInputError();
-                continue;
-            }
-
-            switch (option) {
+                switch (choice) {
                 case 1:
-                    func1();
+                    rs.prompt1();
                     break;
                 case 2:
-                    func2();
+                    rs.prompt2();
                     break;
                 case 3:
-                    func3();
+                    rs.prompt3();
                     break;
                 case 4:
-                    func4();
+                    rs.prompt4();
                     break;
                 case 5:
-                    func5();
+                    rs.prompt5();
                     break;
                 case 6:
-                    func6();
+                    rs.prompt6();
                     break;
                 case 7:
-                    end = true;
-                    break;
+                    return;
                 default:
-                    printInputError();
-                    break;
+                    System.out.println("Invalid Input");
+                }
+
             }
+
+        } catch (SQLException e) {
+            System.err.println("SQLException: " + e.getMessage());
+        } catch (Exception e2) {
+            System.err.println("Exception: " + e2.getMessage());
         }
-        sc.close();
+
     }
 
     private void printMenu() {
@@ -110,95 +80,358 @@ public class InnReservations {
         System.out.print("What would you like to do? Select an option: ");
     }
 
-    private void func1() throws SQLException {
+    private void prompt1() throws SQLException {
+
+        System.out.println("Show Rooms and Rates\n");
+
+        // Step 0: Load MySQL JDBC Driver
+        // No longer required as of JDBC 2.0 / Java 6
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            System.out.println("MySQL JDBC Driver loaded");
+        } catch (ClassNotFoundException ex) {
+            System.err.println("Unable to load JDBC Driver");
+            System.exit(-1);
+        }
+
+       
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT * from lab7_rooms order by RoomName");
 
-        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
-        System.getenv("HP_JDBC_USER"),
-        System.getenv("HP_JDBC_PW"))) {
+        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"), System.getenv("HP_JDBC_USER"),
+                System.getenv("HP_JDBC_PW"))) {
             try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql.toString())) {
                 while (rs.next()) {
                     System.out.println(rs.getString("RoomCode"));
                     System.out.println(rs.getString("RoomName"));
 
                 }
-            } catch (SQLException e) { e.printStackTrace(); }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         } 
+
     }
 
-    private void func2() {
-        
+    private void prompt2() throws SQLException {
+
+        System.out.println("Reserve a room\n");
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            System.out.println("MySQL JDBC Driver loaded");
+        } catch (ClassNotFoundException ex) {
+            System.err.println("Unable to load JDBC Driver");
+            System.exit(-1);
+        }
+
     }
 
-    private void func3() throws SQLException{
-        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
-        System.getenv("HP_JDBC_USER"),
-        System.getenv("HP_JDBC_PW"))) {
+    private void prompt3() throws SQLException {
+
+        System.out.println("Reservation Change\n");
+
+        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"), System.getenv("HP_JDBC_USER"),
+                System.getenv("HP_JDBC_PW"))) {
             conn.setAutoCommit(false);
 
-            int resCode = -1; 
+            int resCode = -1;
             while (true) {
                 try {
                     System.out.print("Enter reservation code: ");
-                    resCode = sc.nextInt(); 
+                    resCode = sc.nextInt();
+                    sc.nextLine();
                     break;
                 } catch (InputMismatchException e) {
                     System.out.println("Enter an integer reservation code");
                     sc.nextLine();
-                }  
+                }
             }
             PreparedStatement stmt = conn.prepareStatement("SELECT * from lab7_reservations where CODE=?");
             stmt.setInt(1, resCode);
 
-            ResultSet rs = stmt.executeQuery(); 
+            ResultSet rs = stmt.executeQuery();
             if (!rs.next()) {
-                System.out.println("That reservation wasn't found.");
+                System.out.println("That reservation wasn't found.\n");
                 return;
             }
 
             System.out.println("Would you like to change any of the following information? Leave blank if not.");
             System.out.print("First Name: ");
             String fName = sc.nextLine();
+            if (fName.trim().length() > 0) { //checks if it was blank, if not update it
+                try (PreparedStatement updStmt = conn.prepareStatement("UPDATE lab7_reservations set FirstName=? where CODE=?")) {
+                    updStmt.setString(1, fName);
+                    updStmt.setInt(2, resCode);
+                    updStmt.executeUpdate();
+                    System.out.printf("Updated First Name: %s \n", fName);
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+            } else {
+                System.out.println("No updated first name.");
+            }
             System.out.print("Last Name: ");
             String lName = sc.nextLine();
-            System.out.print("Begin Date: ");
-            String checkIn = sc.nextLine();
-            System.out.print("End Date: ");
-            String checkOut = sc.nextLine();
-            System.out.print("Number of kids: ");
-            int kids = sc.nextInt(); 
-            System.out.print("Number of adults: ");
-            int adults = sc.nextInt(); 
+            if (lName.trim().length() > 0) { //checks if it was blank, if not update it
+                try (PreparedStatement updStmt = conn.prepareStatement("UPDATE lab7_reservations set LastName=? where CODE=?")) {
+                    updStmt.setString(1, lName);
+                    updStmt.setInt(2, resCode);
+                    updStmt.executeUpdate();
+                    System.out.printf("Updated Last Name: %s \n", lName);
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+            } else {
+                System.out.println("No updated last name.");
+            }
+            System.out.print("RoomCode: ");
+            String roomCode = sc.nextLine().toUpperCase();
+            if (roomCode.trim().length() > 0) {
+                PreparedStatement stmtRoom = conn.prepareStatement("SELECT * from lab7_reservations where Room=?");
+                stmtRoom.setString(1, roomCode);
+                ResultSet rsRoom = stmtRoom.executeQuery();
+                if (!rsRoom.next()) {
+                    System.out.println("That room code wasn't found. Nothing will update. Please try again.\n");
+                    return;
+                }
+                try (PreparedStatement updStmt = conn.prepareStatement("UPDATE lab7_reservations set Room=? where CODE=?")) {
+                    updStmt.setString(1, roomCode);
+                    updStmt.setInt(2, resCode);
+                    updStmt.executeUpdate();
+                    System.out.printf("Updated Room: %s \n", roomCode);
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+            } else {
+                System.out.println("No updated room.");
+            }
 
+            //make sure that datediff(checkout, checkin) > 0
+            //either with both new dates or one new date with an old date
+            //open room from those dates
+            System.out.print("Checkin Date [YYYY-MM-DD]: ");
+            String checkIn = sc.nextLine();
+            Date CI; //new or original checkin date
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            if (checkIn.trim().length() > 0) {
+                try (PreparedStatement updStmt = conn.prepareStatement("UPDATE lab7_reservations set CheckIn=? where CODE=?")) {
+                    try {
+                        java.sql.Date d = new Date(df.parse(checkIn).getTime());
+                        updStmt.setDate(1, d);
+                        updStmt.setInt(2, resCode);
+                        updStmt.executeUpdate();
+                        CI = d;
+                    } catch (ParseException e) {
+                        System.err.println("invalid date format.");
+                        return;
+                    }
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+            } else {
+                try (PreparedStatement getCI = conn.prepareStatement("SELECT CheckIn from lab7_reservations where CODE=?")){
+                    getCI.setInt(1, resCode);
+                    ResultSet rsCI = getCI.executeQuery();
+                    rsCI.next();
+                    CI = rsCI.getDate("CheckIn");
+                
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+                System.out.println("No updated checkin.");
+            }
+            //prints a day off, just add one to it
+            System.out.println(df.format(CI));
+
+            System.out.print("Checkout Date [YYYY-MM-DD]: ");
+            String checkOut = sc.nextLine();
+            Date CO; //new or original checkout date
+            if (checkOut.trim().length() > 0) {
+                try (PreparedStatement updStmt = conn.prepareStatement("UPDATE lab7_reservations set Checkout=? where CODE=?")) {
+                    try {
+                        Date d = new Date(df.parse(checkOut).getTime());
+                        updStmt.setDate(1, d);
+                        updStmt.setInt(2, resCode);
+                        updStmt.executeUpdate();
+                        CO = d;
+                    } catch (ParseException e) {
+                        System.err.println("invalid date format.");
+                        return;
+                    }
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+            } else {
+                try (PreparedStatement getCO = conn.prepareStatement("SELECT Checkout from lab7_reservations where CODE=?")){
+                    getCO.setInt(1, resCode);
+                    ResultSet rsCO = getCO.executeQuery();
+                    rsCO.next();
+                    CO = rsCO.getDate("Checkout");
+                
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+                System.out.println("No updated checkout.");
+            }
+            System.out.println(CO);
+            // TODO: check if the checkin is before the checkout
+            // TODO: check if there is a room available for the given dates
+
+            System.out.print("Number of kids (integer): ");
+            String kidsS = sc.nextLine();
+            int oldkids;
+
+            if (kidsS.trim().length() > 0) { //if not whitespace
+                try {
+                    int kids = Integer.parseInt(kidsS); // try to turn into an integer
+                    if (kids < 0) {
+                        System.out.println("That wasn't a valid integer value. Please try again.\n");
+                        return;
+                    } else {
+                        oldkids = kids; //oldkids will always have a value, want to use this later for error checking
+                    }
+                } catch (NumberFormatException e) { // handle not an int 
+                    System.out.println("That wasn't an integer value. Please try again.\n");
+                    return;
+                }          
+                try (PreparedStatement updStmt = conn.prepareStatement("UPDATE lab7_reservations set Kids=? where CODE=?")) {
+                    updStmt.setInt(1, oldkids);
+                    updStmt.setInt(2, resCode);
+                    updStmt.executeUpdate();
+                    System.out.printf("Updated Amount of kids: %d \n", oldkids);
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+    
+            } else { //if it is whitespace, get original number of kids
+                try (PreparedStatement getKids = conn.prepareStatement("SELECT Kids from lab7_reservations where CODE=?")){
+                    getKids.setInt(1, resCode);
+                    ResultSet rsKids = getKids.executeQuery();
+                    rsKids.next();
+                    oldkids = rsKids.getInt("Kids");
+                
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+                System.out.println("No updated kids.");
+            }
+
+            // use oldkids here, do similar with adults
+            System.out.print("Number of adults (integer): ");
+            String adults = sc.nextLine();
+            int oldadults;
+
+            if (adults.trim().length() > 0) { //if not whitespace
+                try {
+                    int adult = Integer.parseInt(adults); //try to turn into an integer
+                    if (adult < 0) {
+                        System.out.println("That wasn't a valid integer value. Please try again.\n");
+                        return;
+                    } else {
+                        oldadults = adult; 
+                    }
+                } catch (NumberFormatException e) { // handle not an int 
+                    System.out.println("That wasn't an integer value. Please try again.\n");
+                    return;
+                }          
+                try (PreparedStatement updStmt = conn.prepareStatement("UPDATE lab7_reservations set Adults=? where CODE=?")) {
+                    updStmt.setInt(1, oldadults);
+                    updStmt.setInt(2, resCode);
+                    updStmt.executeUpdate();
+                    System.out.printf("Updated Amount of adults: %d \n", oldadults);
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+    
+            } else {
+                try (PreparedStatement getAdult = conn.prepareStatement("SELECT Adults from lab7_reservations where CODE=?")){
+                    getAdult.setInt(1, resCode);
+                    ResultSet rsAdult = getAdult.executeQuery();
+                    rsAdult.next();
+                    oldadults = rsAdult.getInt("Adults");
+                
+                } catch (SQLException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                    conn.rollback();
+                    return;
+                }
+                System.out.println("No updated adults.");
+            }
+            int totalOcc = oldadults+oldkids;
+            int maxOccupancy = -1;
+            String getMaxOcc = "select maxOcc from lab7_rooms join lab7_reservations on Room = RoomCode where CODE = ?";
+            
+            //want to compare totalOcc to maxOccupancy
+            try (PreparedStatement maxStmt = conn.prepareStatement(getMaxOcc) ) {
+                maxStmt.setInt(1, resCode);
+                ResultSet rsmaxOcc = maxStmt.executeQuery();
+                rsmaxOcc.next();
+                maxOccupancy = rsmaxOcc.getInt("maxOcc");
+            } catch (SQLException e) {
+                System.out.println("We ran into a problem. Try again.\n");
+                conn.rollback();
+                return;
+            }
+            if (totalOcc > maxOccupancy) {
+                System.out.printf("The amount of guests you want, %d, exceeds the maximum occupants for the room, %d. Please try again.\n\n", totalOcc, maxOccupancy);
+                conn.rollback();
+                return;
+            }
+            //commit all updates after error checking
+            conn.commit();
+            System.out.println("Your reservation has been successfully updated!\n");
         }
+        
     }
 
-    private void func4() throws SQLException{
-        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
-        System.getenv("HP_JDBC_USER"),
-        System.getenv("HP_JDBC_PW"))) {
+    private void prompt4() throws SQLException {
+
+        System.out.println("Reservation Cancellation\n");
+
+        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"), System.getenv("HP_JDBC_USER"),
+                System.getenv("HP_JDBC_PW"))) {
             conn.setAutoCommit(false);
 
-            int resCode = -1; 
+            int resCode = -1;
             while (true) {
                 try {
                     System.out.print("Enter reservation code: ");
-                    resCode = sc.nextInt(); 
+                    resCode = sc.nextInt();
                     break;
                 } catch (InputMismatchException e) {
                     System.out.println("Enter an integer reservation code");
                     sc.nextLine();
-                }  
+                }
             }
             PreparedStatement stmt = conn.prepareStatement("SELECT * from lab7_reservations where CODE=?");
             stmt.setInt(1, resCode);
 
-            ResultSet rs = stmt.executeQuery(); 
+            ResultSet rs = stmt.executeQuery();
             if (!rs.next()) {
                 System.out.println("That reservation wasn't found.");
                 return;
-            } 
+            }
 
             System.out.println("Here is your reservation:\nRoom: " + rs.getString("Room"));
             System.out.println("CheckIn: " + rs.getDate("CheckIn"));
@@ -212,7 +445,6 @@ public class InnReservations {
                 try (PreparedStatement delStmt = conn.prepareStatement("DELETE from lab7_reservations where CODE=?")) {
                     delStmt.setInt(1, resCode);
                     delStmt.executeUpdate();
-                    conn.commit();
                     System.out.println("Reservation cancelled");
                 } catch (SQLException e) {
                     System.out.println("We ran into a problem.");
@@ -221,224 +453,43 @@ public class InnReservations {
             } else {
                 System.out.println("Reservation not cancelled.");
             }
-
-        } 
-    }
-
-    private void func5() {
+            conn.commit();
+        }
         
-    }
-
-    private void func6() {
+        System.out.print("\n");
 
     }
 
-    private void printInputError() {
-        System.out.println("\n Input an integer between 1-6");
+    private void prompt5() throws SQLException {
+
+        System.out.println("Detailed Reservation Information\n");
+        /*
+        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"), System.getenv("HP_JDBC_USER"),
+                System.getenv("HP_JDBC_PW"))) {
+            // Step 2: Construct SQL statement
+            String sql = "select * from lab7_reservations";
+            // Step 3: (omitted in this example) Start transaction
+            try (Statement stmt = conn.createStatement()) {
+            }
+        }
+        */
+
     }
 
+    private void prompt6() throws SQLException {
 
+        System.out.println("Show revenue\n");
+        /*
+        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"), System.getenv("HP_JDBC_USER"),
+                System.getenv("HP_JDBC_PW"))) {
+            // Step 2: Construct SQL statement
+            String sql = "select * from lab7_reservations";
+            // Step 3: (omitted in this example) Start transaction
+            try (Statement stmt = conn.createStatement()) {
+            }
+        }
+        */
 
-    // Demo1 - Establish JDBC connection, execute DDL statement
-    private void demo1() throws SQLException {
-
-        System.out.println("demo1: Add AvailUntil column to hp_goods table\r\n");
-        
-	// Step 0: Load MySQL JDBC Driver
-	// No longer required as of JDBC 2.0  / Java 6
-	try{
-	    Class.forName("com.mysql.jdbc.Driver");
-	    System.out.println("MySQL JDBC Driver loaded");
-	} catch (ClassNotFoundException ex) {
-	    System.err.println("Unable to load JDBC Driver");
-	    System.exit(-1);
-	}
-
-	// Step 1: Establish connection to RDBMS
-	try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
-							   System.getenv("HP_JDBC_USER"),
-							   System.getenv("HP_JDBC_PW"))) {
-	    // Step 2: Construct SQL statement
-	    String sql = "ALTER TABLE hp_goods ADD COLUMN AvailUntil DATE";
-
-	    // Step 3: (omitted in this example) Start transaction
-
-	    try (Statement stmt = conn.createStatement()) {
-
-		// Step 4: Send SQL statement to DBMS
-		boolean exRes = stmt.execute(sql);
-		
-		// Step 5: Handle results
-		System.out.format("Result from ALTER: %b %n", exRes);
-	    }
-
-	    // Step 6: (omitted in this example) Commit or rollback transaction
-	}
-	// Step 7: Close connection (handled by try-with-resources syntax)
     }
-    
-
-    // Demo2 - Establish JDBC connection, execute SELECT query, read & print result
-    private void demo2() throws SQLException {
-
-        System.out.println("demo2: List content of hp_goods table\r\n");
-        
-	// Step 1: Establish connection to RDBMS
-	try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
-							   System.getenv("HP_JDBC_USER"),
-							   System.getenv("HP_JDBC_PW"))) {
-	    // Step 2: Construct SQL statement
-	    String sql = "SELECT * FROM hp_goods";
-
-	    // Step 3: (omitted in this example) Start transaction
-
-	    // Step 4: Send SQL statement to DBMS
-	    try (Statement stmt = conn.createStatement();
-		 ResultSet rs = stmt.executeQuery(sql)) {
-
-		// Step 5: Receive results
-		while (rs.next()) {
-		    String flavor = rs.getString("Flavor");
-		    String food = rs.getString("Food");
-		    float price = rs.getFloat("price");
-		    System.out.format("%s %s ($%.2f) %n", flavor, food, price);
-		}
-	    }
-
-	    // Step 6: (omitted in this example) Commit or rollback transaction
-	}
-	// Step 7: Close connection (handled by try-with-resources syntax)
-    }
-
-
-    // Demo3 - Establish JDBC connection, execute DML query (UPDATE)
-    // -------------------------------------------
-    // Never (ever) write database code like this!
-    // -------------------------------------------
-    private void demo3() throws SQLException {
-
-        System.out.println("demo3: Populate AvailUntil column using string concatenation\r\n");
-        
-	// Step 1: Establish connection to RDBMS
-	try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
-							   System.getenv("HP_JDBC_USER"),
-							   System.getenv("HP_JDBC_PW"))) {
-	    // Step 2: Construct SQL statement
-	    Scanner scanner = new Scanner(System.in);
-	    System.out.print("Enter a flavor: ");
-	    String flavor = scanner.nextLine();
-	    System.out.format("Until what date will %s be available (YYYY-MM-DD)? ", flavor);
-	    String availUntilDate = scanner.nextLine();
-
-	    // -------------------------------------------
-	    // Never (ever) write database code like this!
-	    // -------------------------------------------
-	    String updateSql = "UPDATE hp_goods SET AvailUntil = '" + availUntilDate + "' " +
-		               "WHERE Flavor = '" + flavor + "'";
-
-	    // Step 3: (omitted in this example) Start transaction
-	    
-	    try (Statement stmt = conn.createStatement()) {
-		
-		// Step 4: Send SQL statement to DBMS
-		int rowCount = stmt.executeUpdate(updateSql);
-		
-		// Step 5: Handle results
-		System.out.format("Updated all '%s' flavored pastries (%d records) %n", flavor, rowCount);		
-	    }
-
-	    // Step 6: (omitted in this example) Commit or rollback transaction
-	    
-	}
-	// Step 7: Close connection (handled implcitly by try-with-resources syntax)
-    }
-
-
-    // Demo4 - Establish JDBC connection, execute DML query (UPDATE) using PreparedStatement / transaction    
-    private void demo4() throws SQLException {
-
-        System.out.println("demo4: Populate AvailUntil column using PreparedStatement\r\n");
-        
-	// Step 1: Establish connection to RDBMS
-	try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
-							   System.getenv("HP_JDBC_USER"),
-							   System.getenv("HP_JDBC_PW"))) {
-	    // Step 2: Construct SQL statement
-	    Scanner scanner = new Scanner(System.in);
-	    System.out.print("Enter a flavor: ");
-	    String flavor = scanner.nextLine();
-	    System.out.format("Until what date will %s be available (YYYY-MM-DD)? ", flavor);
-	    LocalDate availDt = LocalDate.parse(scanner.nextLine());
-	    
-	    String updateSql = "UPDATE hp_goods SET AvailUntil = ? WHERE Flavor = ?";
-
-	    // Step 3: Start transaction
-	    conn.setAutoCommit(false);
-	    
-	    try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
-		
-		// Step 4: Send SQL statement to DBMS
-		pstmt.setDate(1, java.sql.Date.valueOf(availDt));
-		pstmt.setString(2, flavor);
-		int rowCount = pstmt.executeUpdate();
-		
-		// Step 5: Handle results
-		System.out.format("Updated %d records for %s pastries%n", rowCount, flavor);
-
-		// Step 6: Commit or rollback transaction
-		conn.commit();
-	    } catch (SQLException e) {
-		conn.rollback();
-	    }
-
-	}
-	// Step 7: Close connection (handled implcitly by try-with-resources syntax)
-    }
-
-
-
-    // Demo5 - Construct a query using PreparedStatement
-    private void demo5() throws SQLException {
-
-        System.out.println("demo5: Run SELECT query using PreparedStatement\r\n");
-        
-	// Step 1: Establish connection to RDBMS
-	try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"),
-							   System.getenv("HP_JDBC_USER"),
-							   System.getenv("HP_JDBC_PW"))) {
-	    Scanner scanner = new Scanner(System.in);
-	    System.out.print("Find pastries with price <=: ");
-	    Double price = Double.valueOf(scanner.nextLine());
-	    System.out.print("Filter by flavor (or 'Any'): ");
-	    String flavor = scanner.nextLine();
-
-	    List<Object> params = new ArrayList<Object>();
-	    params.add(price);
-	    StringBuilder sb = new StringBuilder("SELECT * FROM hp_goods WHERE price <= ?");
-	    if (!"any".equalsIgnoreCase(flavor)) {
-		sb.append(" AND Flavor = ?");
-		params.add(flavor);
-	    }
-	    
-	    try (PreparedStatement pstmt = conn.prepareStatement(sb.toString())) {
-		int i = 1;
-		for (Object p : params) {
-		    pstmt.setObject(i++, p);
-		}
-
-		try (ResultSet rs = pstmt.executeQuery()) {
-		    System.out.println("Matching Pastries:");
-		    int matchCount = 0;
-		    while (rs.next()) {
-			System.out.format("%s %s ($%.2f) %n", rs.getString("Flavor"), rs.getString("Food"), rs.getDouble("price"));
-			matchCount++;
-		    }
-		    System.out.format("----------------------%nFound %d match%s %n", matchCount, matchCount == 1 ? "" : "es");
-		}
-	    }
-
-	}
-    }
-    
 
 }
