@@ -90,7 +90,6 @@ public class InnReservations {
             System.exit(-1);
         }
 
-       
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT * from lab7_rooms order by RoomName");
 
@@ -105,7 +104,7 @@ public class InnReservations {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        } 
+        }
 
     }
 
@@ -226,11 +225,12 @@ public class InnReservations {
     private void prompt5() throws SQLException {
 
         System.out.println("Detailed Reservation Information\n");
-        /*
+
         try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"), System.getenv("HP_JDBC_USER"),
                 System.getenv("HP_JDBC_PW"))) {
             // Step 2: Construct SQL statement
-            String sql = "select * from lab7_reservations";
+            String sql = "SELECT * FROM kspark01.lab7_reservations";
+            System.out.println("in.");
 
             // Step 3: (omitted in this example) Start transaction
 
@@ -238,26 +238,157 @@ public class InnReservations {
 
             }
         }
-        */
 
     }
 
     private void prompt6() throws SQLException {
 
         System.out.println("Show revenue\n");
-        /*
+
         try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"), System.getenv("HP_JDBC_USER"),
                 System.getenv("HP_JDBC_PW"))) {
-            // Step 2: Construct SQL statement
-            String sql = "select * from lab7_reservations";
+            String sql = " with\n" + "    reservations as (\n" + "        select CODE, Room, CheckIn, CheckOut, Rate\n"
+                    + "        from atran271.lab7_reservations\n" + "    ),\n" + "    rooms as (\n"
+                    + "        select RoomCode, RoomName, basePrice\n" + "        from atran271.lab7_rooms\n"
+                    + "    ),\n" + "    revenue as (\n" + "        select * from\n"
+                    + "        reservations join rooms\n" + "        on reservations.Room = rooms.RoomCode\n"
+                    + "    ),\n" + "    January as (\n" + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-02-01'), greatest(CheckIn, '2022-01-01')) * Rate)\n"
+                    + "            as January\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-02-01'), greatest(CheckIn, '2022-01-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    February as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-03-01'), greatest(CheckIn, '2022-02-01')) * Rate)\n"
+                    + "            as February\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-03-01'), greatest(CheckIn, '2022-02-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    March as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-04-01'), greatest(CheckIn, '2022-03-01')) * Rate)\n"
+                    + "            as March\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-04-01'), greatest(CheckIn, '2022-03-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    April as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-05-01'), greatest(CheckIn, '2022-04-01')) * Rate)\n"
+                    + "            as April\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-05-01'), greatest(CheckIn, '2022-04-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    May as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-06-01'), greatest(CheckIn, '2022-05-01')) * Rate)\n"
+                    + "            as May\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-06-01'), greatest(CheckIn, '2022-05-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    June as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-07-01'), greatest(CheckIn, '2022-06-01')) * Rate)\n"
+                    + "            as June\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-07-01'), greatest(CheckIn, '2022-06-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    July as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-08-01'), greatest(CheckIn, '2022-07-01')) * Rate)\n"
+                    + "            as July\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-08-01'), greatest(CheckIn, '2022-07-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    August as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-09-01'), greatest(CheckIn, '2022-08-01')) * Rate)\n"
+                    + "            as August\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-09-01'), greatest(CheckIn, '2022-08-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    September as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-10-01'), greatest(CheckIn, '2022-09-01')) * Rate)\n"
+                    + "            as September\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-10-01'), greatest(CheckIn, '2022-09-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    October as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-11-01'), greatest(CheckIn, '2022-10-01')) * Rate)\n"
+                    + "            as October\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-11-01'), greatest(CheckIn, '2022-10-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    November as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2022-12-01'), greatest(CheckIn, '2022-11-01')) * Rate)\n"
+                    + "            as November\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2022-12-01'), greatest(CheckIn, '2022-11-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    December as (\n"
+                    + "        select Room, RoomName,\n"
+                    + "        sum(datediff(least(CheckOut, '2023-01-01'), greatest(CheckIn, '2022-12-01')) * Rate)\n"
+                    + "            as December\n" + "        from revenue\n"
+                    + "        where datediff(least(CheckOut, '2023-01-01'), greatest(CheckIn, '2022-12-01')) > 0\n"
+                    + "        group by Room, RoomName\n" + "    ),\n" + "    room as (\n"
+                    + "        select RoomCode, RoomName from rooms\n" + "    ),\n" + "    revenues as (\n"
+                    + "        select room.RoomCode as RoomCode,\n"
+                    + "            round(ifnull(January.January, 0)) as January,\n"
+                    + "            round(ifnull(February.February, 0)) as February,\n"
+                    + "            round(ifnull(March.March, 0)) as March,\n"
+                    + "            round(ifnull(April.April, 0)) as April,\n"
+                    + "            round(ifnull(May.May, 0)) as May,\n"
+                    + "            round(ifnull(June.June, 0)) as June,\n"
+                    + "            round(ifnull(July.July, 0)) as July,\n"
+                    + "            round(ifnull(August.August, 0)) as August,\n"
+                    + "            round(ifnull(September.September, 0)) as September,\n"
+                    + "            round(ifnull(October.October, 0)) as October,\n"
+                    + "            round(ifnull(November.November, 0)) as November,\n"
+                    + "            round(ifnull(December.December, 0)) as December,\n"
+                    + "            round(ifnull(January, 0)\n" + "            + ifnull(February, 0)\n"
+                    + "            + ifnull(March, 0)\n" + "            + ifnull(April, 0)\n"
+                    + "            + ifnull(May, 0)\n" + "            + ifnull(June, 0)\n"
+                    + "            + ifnull(July, 0)\n" + "            + ifnull(August, 0)\n"
+                    + "            + ifnull(September, 0)\n" + "            + ifnull(October, 0)\n"
+                    + "            + ifnull(November, 0)\n" + "            + ifnull(December, 0))\n"
+                    + "            as Total\n" + "        from room\n" + "        left join January\n"
+                    + "        on room.RoomCode = January.Room\n" + "        left join February\n"
+                    + "        on room.RoomCode = February.Room\n" + "        left join March\n"
+                    + "        on room.RoomCode = March.Room\n" + "        left join April\n"
+                    + "        on room.RoomCode = April.Room\n" + "        left join May\n"
+                    + "        on room.RoomCode = May.Room\n" + "        left join June\n"
+                    + "        on room.RoomCode = June.Room\n" + "        left join July\n"
+                    + "        on room.RoomCode = July.Room\n" + "        left join August\n"
+                    + "        on room.RoomCode = August.Room\n" + "        left join September\n"
+                    + "        on room.RoomCode = September.Room\n" + "        left join October\n"
+                    + "        on room.RoomCode = October.Room\n" + "        left join November\n"
+                    + "        on room.RoomCode = November.Room\n" + "        left join December\n"
+                    + "        on room.RoomCode = December.Room\n" + "    ),\n" + "    totals as (\n"
+                    + "        select 'Totals' as RoomCode,\n" + "            round(sum(January)) as January,\n"
+                    + "            round(sum(February)) as February,\n" + "            round(sum(March)) as March,\n"
+                    + "            round(sum(April)) as April,\n" + "            round(sum(May)) as May,\n"
+                    + "            round(sum(June)) as June,\n" + "            round(sum(July)) as July,\n"
+                    + "            round(sum(August)) as August,\n"
+                    + "            round(sum(September)) as September,\n"
+                    + "            round(sum(October)) as October,\n"
+                    + "            round(sum(November)) as November,\n"
+                    + "            round(sum(December)) as December,\n" + "            round(sum(January)\n"
+                    + "            + sum(February)\n" + "            + sum(March)\n" + "            + sum(April)\n"
+                    + "            + sum(May)\n" + "            + sum(June)\n" + "            + sum(July)\n"
+                    + "            + sum(August)\n" + "            + sum(September)\n" + "            + sum(October)\n"
+                    + "            + sum(November)\n" + "            + sum(December))\n" + "            as Total\n"
+                    + "        from revenues\n" + "    ),\n" + "    overview as (\n"
+                    + "        select * from revenues\n" + "        union all\n" + "        select * from totals\n"
+                    + "    )\n" + "select * from overview ";
 
-            // Step 3: (omitted in this example) Start transaction
+            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
 
-            try (Statement stmt = conn.createStatement()) {
+                // Step 5: Receive results
+                while (rs.next()) {
+                    String roomcode = rs.getString("RoomCode");
+                    int jan = rs.getInt("January");
+                    int feb = rs.getInt("February");
+                    int mar = rs.getInt("March");
+                    int april = rs.getInt("April");
+                    int may = rs.getInt("May");
+                    int june = rs.getInt("June");
+                    int july = rs.getInt("July");
+                    int august = rs.getInt("August");
+                    int sep = rs.getInt("September");
+                    int oct = rs.getInt("October");
+                    int nov = rs.getInt("November");
+                    int dec = rs.getInt("December");
+                    int total = rs.getInt("Total");
 
+                    System.out.format(
+                            "%-6s $%-5d $%-5d $%-5d $%-5d $%-5d $%-5d "
+                                    + "$%-5d $%-5d $%-5d $%-5d $%-5d $%-5d $%-5d %n",
+                            roomcode, jan, feb, mar, april, may, june, july, august, sep, oct, nov, dec, total);
+                }
+                    System.out.println();
             }
         }
-        */
 
     }
 
