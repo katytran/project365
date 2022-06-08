@@ -114,7 +114,10 @@ public class InnReservations {
     }
 
     private void prompt2() throws SQLException {
-
+        // accept user information, validating each step of the way
+        // produce the 5 most similar rooms to the information provided
+        // cancel and return to main menu or choose one of the options
+        // print out final reservation
         System.out.println("Reserve a room\n");
 
         try {
@@ -189,33 +192,45 @@ public class InnReservations {
             } else {
                 System.out.println("No updated last name.");
             }
-            System.out.print("RoomCode: ");
-            String roomCode = sc.nextLine().toUpperCase();
-            if (roomCode.trim().length() > 0) {
-                PreparedStatement stmtRoom = conn.prepareStatement("SELECT * from lab7_reservations where Room=?");
-                stmtRoom.setString(1, roomCode);
-                ResultSet rsRoom = stmtRoom.executeQuery();
-                if (!rsRoom.next()) {
-                    System.out.println("That room code wasn't found. Nothing will update. Please try again.\n");
-                    return;
-                }
-                try (PreparedStatement updStmt = conn.prepareStatement("UPDATE lab7_reservations set Room=? where CODE=?")) {
-                    updStmt.setString(1, roomCode);
-                    updStmt.setInt(2, resCode);
-                    updStmt.executeUpdate();
-                    System.out.printf("Updated Room: %s \n", roomCode);
-                } catch (SQLException e) {
-                    System.out.println("We ran into a problem. Try again.\n");
-                    conn.rollback();
-                    return;
-                }
-            } else {
-                System.out.println("No updated room.");
+            // // dont need the room change
+            // System.out.print("RoomCode: ");
+            // String roomCode = sc.nextLine().toUpperCase();
+            // if (roomCode.trim().length() > 0) {
+            //     PreparedStatement stmtRoom = conn.prepareStatement("SELECT * from lab7_reservations where Room=?");
+            //     stmtRoom.setString(1, roomCode);
+            //     ResultSet rsRoom = stmtRoom.executeQuery();
+            //     if (!rsRoom.next()) {
+            //         System.out.println("That room code wasn't found. Nothing will update. Please try again.\n");
+            //         return;
+            //     }
+            //     try (PreparedStatement updStmt = conn.prepareStatement("UPDATE lab7_reservations set Room=? where CODE=?")) {
+            //         updStmt.setString(1, roomCode);
+            //         updStmt.setInt(2, resCode);
+            //         updStmt.executeUpdate();
+            //         System.out.printf("Updated Room: %s \n", roomCode);
+            //     } catch (SQLException e) {
+            //         System.out.println("We ran into a problem. Try again.\n");
+            //         conn.rollback();
+            //         return;
+            //     }
+            // } else {
+            //     System.out.println("No updated room.");
+            // }
+
+            // find roomcode
+            String roomCode;
+            try (PreparedStatement getRC = conn.prepareStatement("SELECT Room from lab7_reservations where CODE=?")){
+                getRC.setInt(1, resCode);
+                ResultSet rC = getRC.executeQuery();
+                rC.next();
+                roomCode = rC.getString("Room");
+            
+            } catch (SQLException e) {
+                System.out.println("We ran into a problem. Try again.\n");
+                conn.rollback();
+                return;
             }
 
-            //make sure that datediff(checkout, checkin) > 0
-            //either with both new dates or one new date with an old date
-            //open room from those dates
             System.out.print("Checkin Date [YYYY-MM-DD]: ");
             String checkIn = sc.nextLine();
             Date CI; //new or original checkin date
@@ -252,7 +267,6 @@ public class InnReservations {
                 System.out.println("No updated checkin.");
             }
             //prints a day off, just add one to it
-            System.out.println(df.format(CI));
 
             System.out.print("Checkout Date [YYYY-MM-DD]: ");
             String checkOut = sc.nextLine();
@@ -288,9 +302,45 @@ public class InnReservations {
                 }
                 System.out.println("No updated checkout.");
             }
-            System.out.println(CO);
-            // TODO: check if the checkin is before the checkout
-            // TODO: check if there is a room available for the given dates
+
+            
+            long difference_In_Time  = CO.getTime() - CI.getTime();
+            // if checkout is the same day as checkin or if checkin is after checkout
+            if (difference_In_Time <= 0) {
+                System.out.println("That is not a valid interval of checkin and checkout dates. Please try again\n");
+                conn.rollback();
+                return;
+            }
+
+            // check if there is a room available for the given dates, can checkout on the same checkin but not vice versa
+            try (PreparedStatement verify = 
+                conn.prepareStatement("select * from lab7_reservations as r1 " + 
+                " where r1.CODE <> ? and exists (select 1 from lab7_reservations as r2 " +
+                " where r2.CODE <> ? and r1.Room = r2.Room and r2.Room =? and  (" +
+                "(? >= r2.CheckIn and ? < r2.Checkout) or " +
+                "(? > r2.CheckIn and ? <= r2.Checkout)))")){
+                    verify.setInt(1, resCode);
+                    verify.setInt(2, resCode);
+                    verify.setString(3, roomCode);
+                    verify.setDate(4, CI);
+                    verify.setDate(5, CI);
+                    verify.setDate(6, CO);
+                    verify.setDate(7, CO);
+                    try (ResultSet rsV = verify.executeQuery()){
+                        if(rsV.next()) {
+                            System.out.println("The requested date interval has a conflict with another reservation. Please try again.\n");
+                            return;
+                        }
+                    } catch (SQLException e) {
+                        System.out.println(e);
+                        conn.rollback();
+                        return;
+                    }
+
+            } catch (SQLException e) {
+                conn.rollback();
+                return;
+            }
 
             System.out.print("Number of kids (integer): ");
             String kidsS = sc.nextLine();
