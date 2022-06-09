@@ -277,7 +277,7 @@ public class InnReservations {
                 rsMax.next();
                 try {
                     int foundMaxOcc = rsMax.getInt("m"); 
-                    System.out.println(foundMaxOcc);
+                    //System.out.println(foundMaxOcc);
                     if (foundMaxOcc < totalOcc) {
                         System.out.println("The total amount of adults and kids exceeds any rooms maximum occupancy. Please try again.\n");
                     }
@@ -288,6 +288,27 @@ public class InnReservations {
                 System.out.println("We ran into a problem. Try again.\n");
                 conn.rollback();
                 return;
+            }
+            //pick an exact reservation (1 choice) or 5 most similar reservations
+            boolean match = false;
+            //if exact match is found, set to true
+
+            //prompt user for cancel or choice
+            if (match){
+                System.out.print("Would you like to book this reservation? Type \'y\' for yes or \'c\' to cancel and return to the main menu. ");
+                while(true) {
+                    String ans = sc.nextLine();
+                    if (ans.toLowerCase().charAt(0) == 'y') {
+                        System.out.println("Great! Here are your reservation details:");
+                        break;
+                    } else if (ans.toLowerCase().charAt(0) == 'c') {
+                        System.out.println("We understad your decision to cancel. Returning you to the main menu.\n");
+                        return;
+                    } else {
+                        System.out.println("That wasn't a valid choice. Please try again.");
+                    }
+                }
+                //print out reservation details
             }
         }
 
@@ -473,7 +494,6 @@ public class InnReservations {
                 conn.rollback();
                 return;
             }
-
             // check if there is a room available for the given dates, can checkout on the same checkin but not vice versa
             try (PreparedStatement verify = 
                 conn.prepareStatement("select * from lab7_reservations as r1 " + 
