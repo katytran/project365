@@ -120,12 +120,175 @@ public class InnReservations {
         // print out final reservation
         System.out.println("Reserve a room\n");
 
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-            System.out.println("MySQL JDBC Driver loaded");
-        } catch (ClassNotFoundException ex) {
-            System.err.println("Unable to load JDBC Driver");
-            System.exit(-1);
+        // try {
+        //     Class.forName("com.mysql.jdbc.Driver");
+        //     System.out.println("MySQL JDBC Driver loaded");
+        // } catch (ClassNotFoundException ex) {
+        //     System.err.println("Unable to load JDBC Driver");
+        //     System.exit(-1);
+        // }
+        try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"), System.getenv("HP_JDBC_USER"),
+                System.getenv("HP_JDBC_PW"))) {
+            conn.setAutoCommit(false);
+            sc.nextLine();
+            String fName;
+            while(true) {
+                System.out.print("First Name: ");
+                fName = sc.nextLine();
+                if (fName.trim().length() > 0) {
+                    break;
+                } else {
+                    System.out.println("Enter a valid first name.");
+                }
+            }
+            //validates last name
+            String lName;
+            while(true) {
+                System.out.print("Last Name: ");
+                lName = sc.nextLine();
+                if (lName.trim().length() > 0) {
+                    break;
+                } else {
+                    System.out.println("Enter a valid last name.");
+                }
+            }
+            //validates roomcode
+            String roomCode;
+            while(true) {
+                System.out.print("RoomCode (enter \'any\' if no preference): ");
+                roomCode = sc.nextLine().toUpperCase();
+                if (roomCode.trim().length() > 0) {
+                    if (roomCode.equals("ANY")) { // no preference
+                        break;
+                    }
+                    PreparedStatement stmtRoom = conn.prepareStatement("SELECT * from lab7_reservations where Room=?");
+                    stmtRoom.setString(1, roomCode);
+                    ResultSet rsRoom = stmtRoom.executeQuery();
+                    if (!rsRoom.next()) {
+                        System.out.println("That room code wasn't found. Please try again.");
+                    } else {
+                        break;
+                    }
+                }
+            }
+            String bedType;
+            while(true) {
+                System.out.print("Bed type (enter \'any\' if no preference): ");
+                bedType = sc.nextLine().toUpperCase();
+                if (bedType.trim().length() > 0) {
+                    if (bedType.equals("ANY")) { // no preference
+                        break;
+                    }
+                    PreparedStatement stmtBed = conn.prepareStatement("SELECT * from lab7_rooms where bedType=?");
+                    stmtBed.setString(1, bedType);
+                    ResultSet rsBeds = stmtBed.executeQuery();
+                    if (!rsBeds.next()) {
+                        System.out.println("That bed type wasn't found. Please try again.");
+                    } else {
+                        break;
+                    }
+                }
+            }
+            Date CI; //checkin
+            while(true) {
+                System.out.print("Checkin Date [YYYY-MM-DD]: ");
+                String checkIn = sc.nextLine();
+                DateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                if (checkIn.trim().length() > 0) {
+                    try {
+                        java.sql.Date d = new Date(df.parse(checkIn).getTime());
+                        CI = d;
+                        break;
+                    } catch (ParseException e) {
+                        System.err.println("invalid date format.");
+                    }
+                } 
+            }
+            Date CO; //checkout
+            while(true) {
+                System.out.print("Checkout Date [YYYY-MM-DD]: ");
+                String checkOut = sc.nextLine();
+                DateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                if (checkOut.trim().length() > 0) {
+                    try {
+                        java.sql.Date d = new Date(df.parse(checkOut).getTime());
+                        CO = d;
+                        break;
+                    } catch (ParseException e) {
+                        System.err.println("invalid date format.");
+                    }
+                } 
+            }
+            long difference_In_Time  = CO.getTime() - CI.getTime();
+            // if checkout is the same day as checkin or if checkin is after checkout
+            if (difference_In_Time <= 0) {
+                System.out.println("That is not a valid interval of checkin and checkout dates. Please try again\n");
+                return;
+            }
+            System.out.print("Number of kids (integer): ");
+            String kidsS = sc.nextLine();
+            int oldkids;
+            while(true) {
+                if (kidsS.trim().length() > 0) { //if not whitespace
+                    try {
+                        int kids = Integer.parseInt(kidsS); // try to turn into an integer
+                        if (kids < 0) {
+                            System.out.println("That wasn't a valid integer value. Please try again.\n");
+
+                        } else {
+                            oldkids = kids; //oldkids will always have a value, want to use this later for error checking
+                            break;
+                        }
+                    } catch (NumberFormatException e) { // handle not an int 
+                        System.out.println("That wasn't an integer value. Please try again.\n");
+                    }
+                }
+            }
+            System.out.print("Number of adults (integer): ");
+            String adults = sc.nextLine();
+            int oldadults;
+            while(true) {
+                if (adults.trim().length() > 0) { 
+                    try {
+                        int adult = Integer.parseInt(adults); 
+                        if (adult < 0) {
+                            System.out.println("That wasn't a valid integer value. Please try again.\n");
+                        } else {
+                            oldadults = adult;
+                            break;
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("That wasn't an integer value. Please try again.\n");
+                    }      
+                } 
+            }
+            int totalOcc = oldadults+oldkids;
+
+            StringBuilder sqlMaxOcc = new StringBuilder();
+            sqlMaxOcc.append("with maxOccupancy as (");
+            sqlMaxOcc.append("    select maxOcc, max(maxOcc) as m");
+            sqlMaxOcc.append("    from lab7_rooms");
+            sqlMaxOcc.append("    group by maxOcc) ");
+            sqlMaxOcc.append(" select m ");
+            sqlMaxOcc.append(" from maxOccupancy ");
+            sqlMaxOcc.append(" where m = (select max(m) from maxOccupancy)");
+            String sql = sqlMaxOcc.toString();
+            try (Statement stmt = conn.createStatement(); ResultSet rsMax = stmt.executeQuery(sql)){
+                rsMax.next();
+                try {
+                    int foundMaxOcc = rsMax.getInt("m"); 
+                    System.out.println(foundMaxOcc);
+                    if (foundMaxOcc < totalOcc) {
+                        System.out.println("The total amount of adults and kids exceeds any rooms maximum occupancy. Please try again.\n");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("We ran into a problem. Try again.\n");
+                }     
+            } catch (SQLException e) {
+                System.out.println("We ran into a problem. Try again.\n");
+                conn.rollback();
+                return;
+            }
         }
 
     }
@@ -266,7 +429,6 @@ public class InnReservations {
                 }
                 System.out.println("No updated checkin.");
             }
-            //prints a day off, just add one to it
 
             System.out.print("Checkout Date [YYYY-MM-DD]: ");
             String checkOut = sc.nextLine();
