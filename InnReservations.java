@@ -674,18 +674,87 @@ public class InnReservations {
 
     private void prompt5() throws SQLException {
 
-        System.out.println("Detailed Reservation Information\n");
+        System.out.println("Detailed Reservation Information:");
+        Scanner scanner = new Scanner();
+        System.out.println("First Name: ");
+        String firstname, lastname;
+        int year, month, day;
+        try {
+            firstname = scanner.nextLine();
+        }catch(Exception e) {
+            firstname = "";
+        }
+        System.out.println("Last Name: ");
+        try {
+            lastname = scanner.nextLine();
+        }catch(Exception e) {
+            lastname = "";
+        }
+        System.out.println("Year: ");
+        try {
+            year = scanner.nextInt();
+        }catch(Exception e) {
+            year = 0;
+        }
+        System.out.println("Month: ");
+        try {
+            month = scanner.nextInt();
+        }catch(Exception e) {
+            month = 0;
+        }
+        System.out.println("Day: ");
+        try {
+            day = scanner.nextInt();
+        }catch(Exception e) {
+            day = 0;
+        }
 
+        java.sql.Date date = new java.sql.Date(year, month, day);
+        String sql = "select * from lab7_reservations";
+        if(firstname.length() != 0) {
+            if(!sql.contains("where")) {
+                sql += "where ";
+            }else {
+                sql += ", firstname like \'%?%\'";
+            }
+        }
+        if(lastname.length() != 0) {
+            if(!sql.contains("where")) {
+                sql += "where ";
+            }else {
+                sql += ", lastname like \'%?%\'";
+            }
+        }
+        if(year != 0) {
+            if(!sql.contains("where")) {
+                sql += "where ";
+            }else {
+                sql += ", year(CheckIn) = ?";
+            }
+        }
+        if(month != 0) {
+            if(!sql.contains("where")) {
+                sql += "where ";
+            }else {
+                sql += ", month(CheckIn) = ?";
+            }
+        }
+        if(day != 0) {
+            if(!sql.contains("where")) {
+                sql += "where ";
+            }else {
+                sql += ", dayofweek(CheckIn) = ?";
+            }
+        }
         try (Connection conn = DriverManager.getConnection(System.getenv("HP_JDBC_URL"), System.getenv("HP_JDBC_USER"),
                 System.getenv("HP_JDBC_PW"))) {
             // Step 2: Construct SQL statement
-            String sql = "SELECT * FROM kspark01.lab7_reservations";
-            System.out.println("in.");
-
             // Step 3: (omitted in this example) Start transaction
-
             try (Statement stmt = conn.createStatement()) {
-
+                ResultSet result = stmt.executeQuery(sql);
+                while(result.next()) {
+                    System.out.println(result.getString(1));
+                }
             }
         }
 
