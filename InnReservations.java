@@ -114,10 +114,7 @@ public class InnReservations {
     }
 
     private void prompt2() throws SQLException {
-        // accept user information, validating each step of the way
-        // produce the 5 most similar rooms to the information provided
-        // cancel and return to main menu or choose one of the options
-        // print out final reservation
+        
         System.out.println("Reserve a room\n");
 
         // try {
@@ -289,29 +286,54 @@ public class InnReservations {
                 conn.rollback();
                 return;
             }
-            //pick an exact reservation (1 choice) or 5 most similar reservations
-            boolean match = false;
-            //if exact match is found, set to true
+            //TODO: pick an exact reservation (1 choice) or 5 most similar reservations
+            
 
             //prompt user for cancel or choice
-            if (match){
-                System.out.print("Would you like to book this reservation? Type \'y\' for yes or \'c\' to cancel and return to the main menu. ");
-                while(true) {
-                    String ans = sc.nextLine();
-                    if (ans.toLowerCase().charAt(0) == 'y') {
-                        System.out.println("Great! Here are your reservation details:");
-                        break;
-                    } else if (ans.toLowerCase().charAt(0) == 'c') {
-                        System.out.println("We understad your decision to cancel. Returning you to the main menu.\n");
-                        return;
-                    } else {
-                        System.out.println("That wasn't a valid choice. Please try again.");
-                    }
+            System.out.print("Would you like to book a reservation? Type \'y\' for yes or \'c\' to cancel and return to the main menu. ");
+            while(true) {
+                String ans = sc.nextLine();
+                if (ans.toLowerCase().charAt(0) == 'y') {
+                    System.out.println("Great! Here are your reservation details:");
+                    break;
+                } else if (ans.toLowerCase().charAt(0) == 'c') {
+                    System.out.println("We understand your decision to not book an Inn. Returning you to the main menu.\n");
+                    return;
+                } else {
+                    System.out.println("That wasn't a valid choice. Please try again.");
                 }
-                //print out reservation details
             }
-        }
+            int resNum;
+            while (true) {
+                try {
+                    System.out.print("Enter which reservation you would like to book(1-5): ");
+                    resNum = sc.nextInt();
+                    sc.nextLine();
+                    break;
+                } catch (InputMismatchException e) {
+                    System.out.println("Enter an integer number.");
+                    sc.nextLine();
+                }
+            }
+            //print out reservation details, TODO: write function to format this
+            switch (resNum) {
+                case 1:
+                    return;
+                case 2:
+                    return;
+                case 3:
+                    return;
+                case 4:
+                    return;
+                case 5:
+                    return;
+                default: 
+                    System.out.println("Invalid integer. Returning to main menu.\n");
+            }
+            //TODO: create an entry into kspark01.lab7_reservations
 
+            conn.commit();
+        }
     }
 
     private void prompt3() throws SQLException {
