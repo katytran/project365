@@ -795,7 +795,8 @@ public class InnReservations {
             try (Statement stmt = conn.createStatement()) {
                 ResultSet result = stmt.executeQuery(sql);
                 while(result.next()) {
-                    System.out.println(result.getString(1));
+                    System.out.println("First Name\tLast Name\tCheck In\t CheckOut")
+                    System.out.println(result.getString("FirstName") + "\t" + result.getString("LastName") + "\t" + result.getDate("CheckIn") + "\t" + result.getDate("CheckOut"));
                 }
             }
         }
